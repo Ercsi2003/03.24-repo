@@ -1,0 +1,22 @@
+https://retoolapi.dev/YzlGEk/data
+See all available endpoints here (generated with json-server).
+Endpoint URL
+
+HTTP method endpoints
+
+GET
+/YzlGEk/data
+GET filter
+/YzlGEk/data?name=value
+GET by id
+/YzlGEk/data/1
+GET paginate
+/YzlGEk/data?_page=2&_limit=10
+POST
+/YzlGEk/data
+PUT
+/YzlGEk/data/1
+PATCH
+/YzlGEk/data/1
+DELETE
+/YzlGEk/data/1

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Details</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+    <main class="container">
+
+        <div id="operations" class="row d-flex justify-content-center">
+            <button class="btn btn-outline-success col-5 m-2" type="button" id="createButton">Create</button>
+            <button class="btn btn-outline-primary col-5 m-2" type="button" id="readButton">Read</button>
+        </div>
+
+        <div>
+            <form method="post" id="memberForm" class="d-none">
+                <input type="hidden" id="id" value="0">
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="name">
+                </div>
+
+                <div class="mb-3">
+                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="phoneNumber">
+                </div>
+
+                <div class="mb-3">
+                    <label for="emailAddress" class="form-label">E-mail</label>
+                    <input type="text" class="form-control" id="emailAddress">
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-outline-primary" id="memberFormButton">Add Member</button>
+                </div>
+
+            </form>
+        </div>
+
+        <div id="memberList">
+            <table class="table">
+                <thead>
+                    <tr class="table-primary">
+                        <th>Name</th>
+                        <th>Id</th>
+                        <th>Phone</th>
+                        <th>E-mail</th>
+                    </tr>
+                </thead>
+                <tbody id="dataOutput"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const url = "https://retoolapi.dev/YzlGEk/data"
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const createButton = document.getElementById("createButton");
+            const readButton = document.getElementById("readButton");
+            const memberForm = document.getElementById("memberForm");
+            const memberFormButton = document.getElementById("memberFormButton");
+            const memberList = document.getElementById("memberList");
+            const idInput = document.getElementById("id");
+            const nameInput = document.getElementById("name");
+            const phoneNumberInput = document.getElementById("phoneNumber");
+            const emailInput = document.getElementById("emailAddress");
+
+
+            createButton.addEventListener("click", () => {
+                showMemberForm();
+                showCreateButton()
+                clearMemberForm();
+            });
+
+            readButton.addEventListener("click", () => {
+                ShowMemberList();
+            });
+
+            async function createMember(member) {
+                const response = await fetch(url, {
+                    method: "POST", body: JSON.stringify(member), headers: {
+                        "Content-Type": "application/json"
+                    }
+                })
+
+                if (response.ok) {
+                    showMembers();
+                    clearMemberForm()
+                }
+                else ("Something went wrong!")
+            };
+
+            async function deleteMember(id) {
+                const memberRemoveConfirm = confirm(`Are you sure you want to remove the member with ID ${id}?`)
+                if (!memberRemoveConfirm) {
+                    return;
+                }
+                else {
+                    const response = await fetch(url + "/" + id, {
+                        method: "DELETE"
+                    });
+                    showMembers();
+                    if (response.ok) {
+                        alert("Deleting this member was unsuccesful!")
+                    }
+                }
+            };
+
+            async function loadMemberUpdateForm(id) {
+                showMemberForm();
+                const response = await fetch(url + "/" + id)
+
+                if (!response.ok) {
+                    showMembers();
+                    alert("Cannot open the update page!")
+                    return;
+                }
+                const member = await response.json();
+
+                idInput.value = member.id;
+                nameInput.value = member.name;
+                phoneNumberInput.value = member.phone;
+                emailInput.value = member.email;
+                showUpdateButton();
+            };
+
+            async function updateMember (id, member) {
+                const response = await fetch(url + "/" + id, {
+                    method: "PATCH",
+                    body: JSON.stringify(member),
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                })
+                if (!response.ok) {
+                    alert("An error occured during update!")
+                    return;
+                }
+                ShowMemberList();
+            };
+
+            function showMembers() {
+                fetch(url)
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (elements) {
+                        let output = document.querySelector("#dataOutput");
+                        let out = "";
+                        for (let item of elements) {
+                            out += `
+                                <tr>
+                                    <td>${item.name}</td>
+                                    <td>${item.id}</td>
+                                    <td>${item.phone}</td>
+                                    <td>${item.email}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-success" onclick="loadMemberUpdateForm(${item.id})">Update</button>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-danger" onclick="deleteMember(${item.id})">Delete</button>
+                                    </td>
+                                </tr>`;
+                        };
+
+                        output.innerHTML = out;
+                    })
+            };
+            window.deleteMember = deleteMember;
+            window.loadMemberUpdateForm = loadMemberUpdateForm;
+            showMembers();
+
+
+            function showUpdateButton() {
+                memberFormButton.textContent = "Update";
+                memberFormButton.classList.remove("btn-outline-success");
+            }
+
+            function showCreateButton() {
+                memberFormButton.textContent = "Add member";
+                memberFormButton.classList.add("btn-outline-primary");
+                memberFormButton.classList.remove("btn-outline-success");
+            }
+
+            function clearMemberForm() {
+                idInput.value = 0;
+                nameInput.value = "";
+                phoneNumberInput.value = "";
+                emailInput.value = "";
+
+            };
+
+            function showMemberForm() {
+                memberList.classList.add("d-none");
+                memberForm.classList.remove("d-none");
+            };
+
+            function ShowMemberList() {
+                showMembers();
+                memberForm.classList.add("d-none");
+                memberList.classList.remove("d-none");
+            };
+
+            memberForm.addEventListener("submit", event => {
+                event.preventDefault();
+                const name = nameInput.value;
+                const phoneNumber = phoneNumberInput.value;
+                const emailAddress = emailInput.value;
+                const id = parseInt(idInput.value);
+
+                const member = {
+                    name: name,
+                    phone: phoneNumber,
+                    email: emailAddress
+                };
+                if (id == 0) {
+                    createMember(member);
+                }
+                else {
+                    updateMember(id, member)
+                }
+
+            });
+        });
+    </script>
+
+</body>
+
+</html>
